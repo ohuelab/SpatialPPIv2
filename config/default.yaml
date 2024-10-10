@@ -4,7 +4,7 @@ seed: 2032
 
 InterfacePredictor:
     dataset:
-        data_root: ./../pinder/pinder/2024-02/pdbs
+        data_root: ./../pinder/2024-02/pdbs
 
         train: datasets/filtered_pinder_train.csv
         val: datasets/filtered_pinder_val.csv
@@ -41,7 +41,7 @@ InterfacePredictor:
 
 InteractionPredictor:
     dataset:
-        data_root: ./../pinder/pinder/2024-02/pdbs
+        data_root: ./../pinder/2024-02/pdbs
 
         train: datasets/train.csv
         val: datasets/val.csv

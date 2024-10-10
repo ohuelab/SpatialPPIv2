@@ -17,6 +17,7 @@ From: pytorch/pytorch:2.2.1-cuda11.8-cudnn8-devel
     pip install sentencepiece==0.2.0
     pip install torchsummary==1.5.1
     pip install tensorboard
+    pip install biopython
 
     # The following are optional packages
     # Can be removed when problems arise
