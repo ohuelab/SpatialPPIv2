@@ -45,3 +45,4 @@ threeLetter = (
 )
 
 three2oneLetter = {i: j for i, j in zip(threeLetter, oneLetter)}
+oneHot = {a:i for i, a in enumerate(list(oneLetter) + ['X'])}

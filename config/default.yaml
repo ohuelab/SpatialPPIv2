@@ -1,69 +1,59 @@
 use_cuda: True
 seed: 2032
 
+basic:
+    # Embedding of the sequence
+    # Option: 'Rostlab/prot_bert', 'Rostlab/prot_t5_xl_uniref50', 'esm2_t33_650M_UR50D', 'onehot'
+    embedding: Rostlab/prot_t5_xl_uniref50
 
-InterfacePredictor:
-    dataset:
-        data_root: ./../pinder/2024-02/pdbs
+    # Device of embedder
+    embedder_device: cpu
 
-        train: datasets/filtered_pinder_train.csv
-        val: datasets/filtered_pinder_val.csv
-        test: datasets/filtered_pinder_test.csv
+    # Distance threshold of residue contact
+    distance_threshold: 8
 
-        embedding: Rostlab/prot_bert
-        distance_threshold: 8
 
-        balance_sample: True
-        negative_by_positive: 1  # number negative / number positive
-        nsample: 64
+dataset:
+    train: 
+        # Path to pdbs
+        data_root: /mnt/f/Research2_pj/pinder/pinder/2024-02/pdbs
+        # Path to datasets
+        path: datasets/train.csv
+        # Type of dataset, option: 
+        # - 'ondisk': torch_geometric OnDiskDataset, with pre-calculated sequence embedding
+        # - 'csv': csv type dataset with names of pdbs
+        # - 'csv_esmac': csv type dataset with sequence, using esm attention contact to build protein graph representation
+        type: csv
+    val:
+        # Path to pdbs
+        data_root: /mnt/f/Research2_pj/pinder/pinder/2024-02/pdbs
+        # Path to datasets
+        path: datasets/val.csv
+        # Type of dataset, option: 
+        # - 'ondisk': torch_geometric OnDiskDataset, with pre-calculated sequence embedding
+        # - 'csv': csv type dataset with names of pdbs
+        # - 'csv_esmac': csv type dataset with sequence, using esm attention contact to build protein graph representation
+        type: csv
+    test:
+        # Path to pdbs
+        data_root: /mnt/f/Research2_pj/dataset/benchmark_n/all_pdbs
+        # Path to datasets
+        path: datasets/benchmark.csv
+        # Type of dataset, option: 
+        # - 'ondisk': torch_geometric OnDiskDataset, with pre-calculated sequence embedding
+        # - 'csv': csv type dataset with names of pdbs
+        # - 'csv_esmac': csv type dataset with sequence, using esm attention contact to build protein graph representation
+        type: csv
 
-    model:
-        task: classification
-        classification_threshold: 0.5
-        input_features: 1024
-        hidden_dim: 32
-        checkpoint: checkpoints/InterfacePredictor.ckpt
 
-    trainer:
-        strategy: ddp_spawn
-        accelerator: gpu
-        batch_size: 4
-        lr: 0.001
-        lr_gamma: 0.9
-        loss_alpha: 0.9
-        loss_gamma: 5
-        devices: 1
-        max_epochs: 20
-        loader_workers: 8
-        test_workers: 4
-        check_val_every_n_epoch: 1
-        accumulate_grad_batches: 2
-
-InteractionPredictor:
-    dataset:
-        data_root: ./../pinder/2024-02/pdbs
-
-        train: datasets/train.csv
-        val: datasets/val.csv
-        test: datasets/test.csv
-
-        embedding: Rostlab/prot_bert
-        distance_threshold: 8
-
-    model:
-        input_features: 1024
-        hidden_dim: 128
-        checkpoint: checkpoints/InteractionPredictor.ckpt
-
-    trainer:
-        strategy: ddp_spawn
-        accelerator: gpu
-        batch_size: 16
-        lr: 0.001
-        lr_gamma: 0.9
-        devices: 1
-        max_epochs: 20
-        loader_workers: 32
-        test_workers: 16
-        check_val_every_n_epoch: 1
-        accumulate_grad_batches: 1
+trainer:
+    strategy: ddp_spawn
+    accelerator: gpu
+    batch_size: 8
+    lr: 0.0001
+    devices: 1
+    max_epochs: 10
+    loader_workers: 32
+    test_workers: 16
+    check_val_every_n_epoch: 1
+    accumulate_grad_batches: 4
