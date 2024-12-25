@@ -73,6 +73,10 @@ When there is no suitable protein structure file, `fasta` files can be used to m
 python inference.py --A demo/D3INY1.fasta --B demo/P62593.fasta
 ```
 
+### Visualization of inference process
+
+Please check the [notebook](https://github.com/ohuelab/SpatialPPIv2/blob/main/demo/example_visualize.ipynb).
+
 ## Train Model
 
 To replicate our research, please follow these steps:
