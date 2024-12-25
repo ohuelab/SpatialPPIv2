@@ -113,8 +113,13 @@ python scripts/dataset_generator.py --exclude scripts/exclude.txt --split train 
 This will speed up training process
 
 ```
-python scripts/calculate_embedding.py --split train --workers 8
+python scripts/calculate_embedding.py --split train --workers 8 --saveroot datasets/train
 ```
+
+After the calculation, edit the `config/default.yaml` config file accordingly.
+
+- Change the `path` to the used above
+- Change the `type` to `ondisk`
 
 ### Train model
 
