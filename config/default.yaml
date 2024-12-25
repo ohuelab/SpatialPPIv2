@@ -16,7 +16,7 @@ basic:
 dataset:
     train: 
         # Path to pdbs
-        data_root: /mnt/f/Research2_pj/pinder/pinder/2024-02/pdbs
+        data_root: /pinder/2024-02/pdbs
         # Path to datasets
         path: datasets/train.csv
         # Type of dataset, option: 
@@ -26,7 +26,7 @@ dataset:
         type: csv
     val:
         # Path to pdbs
-        data_root: /mnt/f/Research2_pj/pinder/pinder/2024-02/pdbs
+        data_root: /pinder/2024-02/pdbs
         # Path to datasets
         path: datasets/val.csv
         # Type of dataset, option: 
@@ -36,9 +36,9 @@ dataset:
         type: csv
     test:
         # Path to pdbs
-        data_root: /mnt/f/Research2_pj/dataset/benchmark_n/all_pdbs
+        data_root: /pinder/2024-02/pdbs
         # Path to datasets
-        path: datasets/benchmark.csv
+        path: datasets/test.csv
         # Type of dataset, option: 
         # - 'ondisk': torch_geometric OnDiskDataset, with pre-calculated sequence embedding
         # - 'csv': csv type dataset with names of pdbs
