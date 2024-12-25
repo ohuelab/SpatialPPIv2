@@ -67,8 +67,8 @@ class SpatialPPIv2(L.LightningModule):
             node_feature = self.gat3(node_feature, data.edge_index, data.edge_attr)
             node_feature = F.relu(self.bn3(node_feature))
             node_feature = self.gat4(node_feature, data.edge_index, data.edge_attr)
-            node_feature = torch.cat([node_feature, data.x], dim=1)
 
+        node_feature = torch.cat([node_feature, data.x], dim=1)
         if data.batch is None:
             data.batch = torch.zeros(data.x.shape[0], dtype=int)
             data.data_shape = [data.data_shape]
