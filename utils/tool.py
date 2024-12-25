@@ -42,6 +42,12 @@ def read_cif(fpath):
     return df
 
 
+def read_fasta(fpath):
+    with open(fpath, 'r') as f:
+        contents = f.readlines()
+        return contents[1].replace('\n', '')
+
+
 def read_pdb(fpath):
     ppdb = PandasPdb()
     ppdb.read_pdb(fpath)
@@ -68,6 +74,12 @@ def extractPDB(pdb_path, chains=None):
         sequence = [CAs[CAs['chain_id'] == c]['residue_name'].to_list() for c in chains]
         sequence = [formatPDBSeq(c, '') for c in sequence]
         coords = [CAs[CAs['chain_id'] == c][cod].to_numpy() for c in chains]
+    
+    elif chains=='first':
+        chain = CAs['chain_id'].unique()[0]
+        sequence = CAs[CAs['chain_id'] == chain]['residue_name'].to_list()
+        sequence = formatPDBSeq(sequence, '')
+        coords = CAs[CAs['chain_id'] == chain][cod].to_numpy()
 
     elif isinstance(chains, list):
         sequence = [CAs[CAs['chain_id'] == c]['residue_name'].to_list() for c in chains]

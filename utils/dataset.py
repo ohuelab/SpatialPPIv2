@@ -70,23 +70,11 @@ class SequenceDataset(Dataset):
 
         seq_a, adj_a = self.embeder.encode(rec['seq_a'], attention_contact=True)
         seq_b, adj_b = self.embeder.encode(rec['seq_b'], attention_contact=True)
-        dshape = [len(rec['seq_a']), len(rec['seq_b'])]
-        distanceMatrix = torch.zeros([sum(dshape), sum(dshape)], dtype=torch.float32)
-        distanceMatrix[:dshape[0], :dshape[0]] = (adj_a > 0.5) * self.distance_threshold
-        distanceMatrix[dshape[0]:, dshape[0]:] = (adj_b > 0.5) * self.distance_threshold
-        distanceMatrix[:dshape[0], dshape[0]:] = self.distance_threshold
-        distanceMatrix[dshape[0]:, :dshape[0]] = self.distance_threshold
-
-        adj = distanceMatrix > 0
-        edge_index = torch.nonzero(adj).T
-        edge_attr = distanceMatrix[adj].type(torch.float32)
-
-        data = Data(
-            x=torch.cat([seq_a, seq_b]),
-            data_shape=dshape,
-            edge_index=edge_index,
-            edge_attr=edge_attr,
-            interact=rec['label'],
+        data = build_data_from_adj(
+            features=[seq_a, seq_b],
+            adjs=[adj_a, adj_b],
+            interact=rec['label'], 
+            distance_threshold=self.distance_threshold
         )
         return data
         
@@ -152,6 +140,28 @@ def build_data(node_feature, coords, interact=0, distance_threshold=8):
         edge_attr=edge_attr,
         interact=interact,
         # contact_gt=contact_gt
+    )
+    return data
+
+
+def build_data_from_adj(features, adjs, interact=0, distance_threshold=8):
+    dshape = [features[0].shape[0], features[1].shape[0]]
+    distanceMatrix = torch.zeros([sum(dshape), sum(dshape)], dtype=torch.float32)
+    distanceMatrix[:dshape[0], :dshape[0]] = (adjs[0] > 0.5) * distance_threshold
+    distanceMatrix[dshape[0]:, dshape[0]:] = (adjs[1] > 0.5) * distance_threshold
+    distanceMatrix[:dshape[0], dshape[0]:] = distance_threshold
+    distanceMatrix[dshape[0]:, :dshape[0]] = distance_threshold
+
+    adj = distanceMatrix > 0
+    edge_index = torch.nonzero(adj).T
+    edge_attr = distanceMatrix[adj].type(torch.float32)
+
+    data = Data(
+        x=torch.cat(features),
+        data_shape=dshape,
+        edge_index=edge_index,
+        edge_attr=edge_attr,
+        interact=interact,
     )
     return data
 
