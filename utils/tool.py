@@ -10,6 +10,7 @@ from transformers import BertModel, BertTokenizer, T5EncoderModel, T5Tokenizer
 
 from biopandas.pdb import PandasPdb
 from Bio.PDB import MMCIFParser
+from Bio import SeqIO
 
 from .residues import three2oneLetter, oneHot
 
@@ -44,8 +45,8 @@ def read_cif(fpath):
 
 def read_fasta(fpath):
     with open(fpath, 'r') as f:
-        contents = f.readlines()
-        return contents[1].replace('\n', '')
+        for record in SeqIO.parse(f, 'fasta'):
+            return str(record.seq)
 
 
 def read_pdb(fpath):
