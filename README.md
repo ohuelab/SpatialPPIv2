@@ -12,6 +12,12 @@ SpatialPPIv2 support multiple environment configuration methods, including docke
 
 You can find the environment file under `env` folder.
 
+### Run in Colab
+
+<a target="_blank" href="https://colab.research.google.com/github/ohuelab/SpatialPPIv2/blob/main/demo/SpatialPPIv2_Colab_Example.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a>
+
 ### Apptainer
 
 ```
