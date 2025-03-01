@@ -1,0 +1,42 @@
+[project]
+name = "spatialppiv2"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "torch-geometric==2.5.1",
+    "torch==2.2.0",
+    "pyg-lib>=0.4.0",
+    "torch-scatter>=2.1.2",
+    "torch-sparse>=0.6.18",
+    "torch-cluster>=1.6.3",
+    "torch-spline-conv>=1.2.2",
+    "matplotlib==3.8.3",
+    "biopandas==0.5.1",
+    "biopython==1.83",
+    "transformers==4.40.2",
+    "sentencepiece==0.2.0",
+    "torchsummary==1.5.1",
+    "scipy==1.12.0",
+    "prodigy-cryst",
+    "fair-esm>=2.0.0",
+    "lightning[extra]>=2.5.0.post0",
+    "pinder[all]>=0.4.1",
+]
+[[tool.uv.index]]
+name = "pytorch-cu118"
+url = "https://download.pytorch.org/whl/cu118"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu118", marker = "platform_system != 'Darwin'"},
+]
+torchvision = [
+  { index = "pytorch-cu118", marker = "platform_system != 'Darwin'"},
+]
+prodigy-cryst = { git = "https://github.com/yusuf1759/prodigy-cryst.git" }
+
+[tool.uv]
+find-links = ["https://data.pyg.org/whl/torch-2.2.0+cu118.html"]
