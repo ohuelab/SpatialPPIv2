@@ -12,6 +12,122 @@ from transformers import AutoTokenizer, AutoModel
 from utils.model import getModel
 from utils.dataset import build_data, build_data_from_adj
 from utils.tool import getConfig, extractPDB, read_fasta, Embed
+import json
+import subprocess
+def create_json(given_sequence0, given_sequence1, output_name, output_dir):
+    # JSON形式のデータを定義
+    os.makedirs(output_dir, exist_ok = True)
+    output_path = os.path.join(output_dir, f"{output_name}.json")
+    data = [
+        {
+            "name": output_name,
+            "modelSeeds": ["42"],
+            "sequences": [
+                {
+                    "proteinChain": {
+                        "sequence": given_sequence0,
+                        "count": 1
+                    }
+                },
+                {
+                    "proteinChain": {
+                        "sequence": given_sequence1,
+                        "count": 1
+                    }
+                }
+            ]
+        }
+    ]
+    
+    # 指定のファイルパスにJSONデータを書き込み
+    with open(output_path, "w") as outfile:
+        json.dump(data, outfile, indent=4)
+def create_json_3J0A(given_sequence, output_name, output_dir):
+    file_B = "my_scripts/3J0A_single.fasta"
+    seq_raw = read_fasta(file_B)
+    create_json(given_sequence, seq_raw, output_name, output_dir)
+def run_alphafold(test_name, json_dir):
+    """
+    AlphaFold3 を実行し、生成された各 summary_confidences.json 内の "ptm" 値の平均を返す関数。
+    
+    Parameters:
+        json_dir (str): JSONファイルが存在するディレクトリ
+        test_name (str): テスト名。ファイル名は {test_name}.json として利用され、また出力ディレクトリにも用いられる。
+        
+    Returns:
+        float or None: 5 つの "ptm" 値の平均。値が取得できなかった場合は None を返す。
+    """
+    # json_path を json_dir と test_name から組み立てる
+    json_path = os.path.join(json_dir, f"{test_name}.json")
+    
+    # 作業開始前のカレントディレクトリを保存
+    original_dir = os.getcwd()
+    
+    # 環境に合わせた各種パスの設定（必要に応じて変更してください）
+    HMMER3_BINDIR = "/home/hikari/hmmer/bin"        # HMMER3 のバイナリディレクトリ
+    DB_DIR = "/data1/hikari/public_databases"         # 配列・構造データベースのディレクトリ
+    MODEL_DIR = "/home/hikari/models"                 # モデルパラメータのディレクトリ
+    ALPHAFOLD3DIR = os.path.expanduser("~/alphafold3") # AlphaFold3 のコードが格納されたディレクトリ
+    
+    try:
+        # AlphaFold3 のディレクトリに移動
+        os.chdir(ALPHAFOLD3DIR)
+        
+        # uv run で実行するコマンド引数をリスト形式で構築
+        cmd = [
+            "uv", "run", "run_alphafold.py",
+            "--jackhmmer_binary_path", os.path.join(HMMER3_BINDIR, "jackhmmer"),
+            "--nhmmer_binary_path", os.path.join(HMMER3_BINDIR, "nhmmer"),
+            "--hmmalign_binary_path", os.path.join(HMMER3_BINDIR, "hmmalign"),
+            "--hmmsearch_binary_path", os.path.join(HMMER3_BINDIR, "hmmsearch"),
+            "--hmmbuild_binary_path", os.path.join(HMMER3_BINDIR, "hmmbuild"),
+            "--db_dir", DB_DIR,
+            "--model_dir", MODEL_DIR,
+            "--json_path", json_path,
+            "--output_dir", "output"
+        ]
+        
+        # AlphaFold3 の実行
+        subprocess.run(cmd, check=True)
+        print("AlphaFold3 の実行が正常に完了しました。")
+        
+    except subprocess.CalledProcessError as e:
+        print("AlphaFold3 の実行中にエラーが発生しました:")
+        print(e)
+        return None
+        
+    finally:
+        # 実行前のカレントディレクトリに戻す
+        os.chdir(original_dir)
+        print(f"カレントディレクトリを {original_dir} に戻しました。")
+    
+    # 出力ディレクトリのベースパスを指定（必要に応じて変更してください）
+    base_output_dir = "/home/hikari/alphafold3/output"
+    
+    ptm_values = []
+    # i = 0,1,2,3,4 の各ディレクトリから summary_confidences.json を読み込み、"ptm" キーの値を取得
+    for i in range(5):
+        summary_file = os.path.join(base_output_dir, test_name, f"seed-42_sample-{i}", "summary_confidences.json")
+        try:
+            with open(summary_file, "r") as f:
+                summary = json.load(f)
+                ptm = summary.get("ptm")
+                if ptm is None:
+                    print(f"'{summary_file}' に 'ptm' キーが見つかりませんでした。")
+                else:
+                    ptm_values.append(ptm)
+        except Exception as e:
+            print(f"{summary_file} の読み込み中にエラーが発生しました: {e}")
+    
+    # 取得できた ptm 値の平均値を計算
+    if not ptm_values:
+        print("ptm 値が一つも取得できませんでした。")
+        return None
+    
+    average_ptm = sum(ptm_values) / len(ptm_values)
+    print(f"計算された平均 ptm 値: {average_ptm}")
+    return average_ptm
+
 def process_A_sequence_from_string(seq_string, embedder):
     """
     Aの配列を文字列として受け取り、embedder.encodeを実行することで
@@ -129,9 +245,15 @@ def get_loss(protein_string):
     Returns:
     float: 最小化すべき損失値（相互作用確率の反転値: 1 - 確率）
     """
+    if not hasattr(get_loss, 'counter'):
+        get_loss.counter = 0
+    get_loss.counter += 1
+    test_name = f"mev_{get_loss.counter}"
+    output_dir = "/home/hikari/alphafold3/input_json"
+    create_json_3J0A(protein_string, test_name, output_dir)
+    interaction_prob = run_alphafold(test_name, output_dir)
     # 相互作用確率を取得
-    interaction_prob = run_interaction_prediction_from_string(protein_string)
-    
+    #interaction_prob = run_interaction_prediction_from_string(protein_string)
     # 最小化問題として扱うため確率を反転（確率が高いほど損失が低くなる）
     loss = 1.0 - interaction_prob
     
@@ -432,7 +554,7 @@ def optimize_protein(epitopes, linkers, n_generations=1000, population_size=50, 
     return best_protein, best_fitness
 
 # 使用例
-if __name__ == "__main__":
+def main():
     # エピトープとリンカーの例
     epitopes = [
         'LIKKNDAYPTIKISYNNTNREDL',
@@ -467,3 +589,12 @@ if __name__ == "__main__":
     best_protein, best_loss = optimize_protein(epitopes, linkers)
     print(f"最適なタンパク質: {best_protein}")
     print(f"最適な損失値: {best_loss}")
+
+
+if __name__ == "__main__":
+    main()
+    #test_name = "test"
+    #output_dir = "/home/hikari/alphafold3/input_json"
+    ##create_json_3J0A("MPSEKTFKQRRSFEQRVEDVRLIREQHPTKIPVIIERYKGEKQLPVLDKTKFLVPDHVNMSELIKIIRRRLQLNANQAFFLLVNGHSMVSVSTPISEVYESERDEDGFLYMVYASQETFGTAMAVEAAAK", test_name, output_dir)
+    #create_json("HHHHHH","FHDSNVKNL",test_name, output_dir)
+    #run_alphafold(test_name, output_dir)
