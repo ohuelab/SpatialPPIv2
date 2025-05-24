@@ -106,27 +106,19 @@ def run_alphafold(test_name, json_dir):
     
     ptm_values = []
     # i = 0,1,2,3,4 の各ディレクトリから summary_confidences.json を読み込み、"ptm" キーの値を取得
-    for i in range(5):
-        summary_file = os.path.join(base_output_dir, test_name, f"seed-42_sample-{i}", "summary_confidences.json")
-        try:
-            with open(summary_file, "r") as f:
-                summary = json.load(f)
-                ptm = summary.get("ptm")
-                if ptm is None:
-                    print(f"'{summary_file}' に 'ptm' キーが見つかりませんでした。")
-                else:
-                    ptm_values.append(ptm)
-        except Exception as e:
-            print(f"{summary_file} の読み込み中にエラーが発生しました: {e}")
-    
-    # 取得できた ptm 値の平均値を計算
-    if not ptm_values:
-        print("ptm 値が一つも取得できませんでした。")
+    summary_file = os.path.join(base_output_dir, test_name, f"{test_name}_summary_confidences.json")
+    try:
+        with open(summary_file, "r") as f:
+            summary = json.load(f)
+            ptm = summary.get("iptm")
+            if ptm is None:
+                print(f"'{summary_file}' に 'iptm' キーが見つかりませんでした。")
+                return None
+            else:
+                return ptm
+    except Exception as e:
+        print(f"{summary_file} の読み込み中にエラーが発生しました: {e}")
         return None
-    
-    average_ptm = sum(ptm_values) / len(ptm_values)
-    print(f"計算された平均 ptm 値: {average_ptm}")
-    return average_ptm
 
 def process_A_sequence_from_string(seq_string, embedder):
     """
@@ -246,7 +238,7 @@ def get_loss(protein_string):
     float: 最小化すべき損失値（相互作用確率の反転値: 1 - 確率）
     """
     if not hasattr(get_loss, 'counter'):
-        get_loss.counter = 0
+        get_loss.counter = 8
     get_loss.counter += 1
     test_name = f"mev_{get_loss.counter}"
     output_dir = "/home/hikari/alphafold3/input_json"
