@@ -1,4 +1,4 @@
-# SpatialPPI-2.0
+# SpatialPPIv2
 
 SpatialPPIv2 is an advanced graph-neural-network-based model that predicts PPIs by using large language models to embed sequence features and Graph Attention Networks to capture structural information.
 
@@ -151,3 +151,6 @@ python main.py --task eval --checkpoint <path to ckpt checkpoint> --output pred.
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
 
+
+## Reference
+- Hu W, Ohue M. [SpatialPPIv2: Enhancing protein–protein interaction prediction through graph neural networks with protein language models](https://doi.org/10.1016/j.csbj.2025.01.022). _Computational and Structural Biotechnology Journal_, 27: 508-518, 2025. doi: 10.1016/j.csbj.2025.01.022
