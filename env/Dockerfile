@@ -1,20 +1,41 @@
-FROM pytorch/pytorch:2.2.1-cuda11.8-cudnn8-devel
-RUN apt-get update && apt-get install -y git
-# Install dependency.
-RUN pip install -U pip
-RUN pip install numpy pandas seaborn tensorboard
-RUN pip install torch_geometric==2.5.1
-RUN pip install pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-2.2.0+cu118.html
-RUN conda install lightning -c conda-forge
-RUN pip install lightning[extra]
-RUN pip install matplotlib==3.8.3
-RUN pip install biopandas==0.5.1
-RUN pip install biopython==1.83
-RUN pip install transformers==4.40.2
-RUN pip install sentencepiece==0.2.0
-RUN pip install torchsummary==1.5.1
-RUN pip install scipy==1.12.0
-RUN pip install torch_cluster -f https://data.pyg.org/whl/torch-2.2.0+cu118.html
-RUN pip install git+https://github.com/yusuf1759/prodigy-cryst.git
-RUN pip install pinder[all]
-RUN pip install fair-esm
+FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV MAMBA_ROOT_PREFIX=/opt/conda
+ENV MAMBA_EXE=/usr/local/bin/micromamba
+ENV CONDA_DEFAULT_ENV=SpatialPPIv2
+ENV CUDA_HOME=/usr/local/cuda
+ENV PATH=/opt/conda/envs/SpatialPPIv2/bin:/opt/conda/bin:${PATH}
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
+
+WORKDIR /workspace
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bzip2 \
+    ca-certificates \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest \
+    | tar -xvj -C /usr/local/bin --strip-components=1 bin/micromamba
+
+COPY env/environment.yaml /tmp/environment.yaml
+
+RUN mkdir -p "${MAMBA_ROOT_PREFIX}" \
+    && micromamba create -y -n SpatialPPIv2 -f /tmp/environment.yaml \
+    && micromamba clean -a -y \
+    && rm -f /tmp/environment.yaml
+
+RUN printf '%s\n' \
+    '#!/usr/bin/env bash' \
+    'set -e' \
+    'if [ "$#" -eq 0 ]; then' \
+    '  exec /bin/bash' \
+    'else' \
+    '  exec micromamba run -n SpatialPPIv2 "$@"' \
+    'fi' \
+    > /usr/local/bin/docker-entrypoint.sh \
+    && chmod +x /usr/local/bin/docker-entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

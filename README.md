@@ -20,8 +20,9 @@ You can find the environment file under `env` folder.
 
 ### Apptainer
 
+Run this from this root directory:
 ```
-apptainer build -s --nv ${CONTAINER_PATH} ./env/Apptainer
+apptainer build --nv SpatialPPIv2.sif ./env/Apptainer
 ```
 
 ### Docker
@@ -33,25 +34,12 @@ docker build -t ${IMAGE_NAME} ./env
 ### Conda
 
 ```
-conda create -n pytorch221 python=3.11
-conda activate pytorch221
-conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
-pip install numpy pandas seaborn tensorboard
-pip install torch_geometric==2.5.1
-pip install pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-2.2.0+cu118.html
-conda install lightning -c conda-forge
-pip install lightning[extra]
-pip install matplotlib==3.8.3
-pip install biopandas==0.5.1
-pip install biopython==1.83
-pip install transformers==4.40.2
-pip install sentencepiece==0.2.0
-pip install torchsummary==1.5.1
-pip install scipy==1.12.0
-pip install torch_cluster -f https://data.pyg.org/whl/torch-2.2.0+cu118.html
-pip install git+https://github.com/yusuf1759/prodigy-cryst.git
-pip install pinder[all]
-pip install fair-esm
+conda env create -f env/environment.yaml
+```
+
+or if you have mamba (should be faster)
+```
+mamba env create -f env/environment.yaml
 ```
 
 ## Inference protein interactions
@@ -78,6 +66,31 @@ When there is no suitable protein structure file, `fasta` files can be used to m
 ```
 python inference.py --A demo/D3INY1.fasta --B demo/P62593.fasta
 ```
+
+### Batch inference: one query protein vs a folder
+
+You can screen one query protein against all supported files in a folder and save interaction probabilities to a CSV file:
+
+```
+python inference_batch.py --query demo/P33895.pdb --targets demo --output results.csv
+```
+
+Options:
+
+- `--query`: Query protein file (`.pdb`/`.cif` or `.fasta`/`.fa`/`.faa`/`.fna`)
+- `--targets`: Folder containing target protein files
+- `--output`: Output CSV path. Default is `inference_batch.csv`
+- `--chain_query`: Chain ID for query structure files. Default is `first`
+- `--chain_targets`: Chain ID for target structure files. Default is `first`
+- `--model`: Model for structure inputs (`ProtT5` or `ESM-2+ac`). For FASTA query, `ESM-2+ac` is forced
+- `--device`: Either `cuda` or `cpu`
+
+Notes:
+
+- Query and target files must be the same modality:
+  - FASTA query requires all FASTA targets
+  - Structure query (`pdb`/`cif`) requires all structure targets
+- The output CSV contains columns: `query`, `target`, `probability`, `status`, `error`
 
 ### Visualization of inference process
 

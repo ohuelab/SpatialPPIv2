@@ -1,23 +1,41 @@
 Bootstrap: docker
-From: pytorch/pytorch:2.2.1-cuda11.8-cudnn8-devel
+From: nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04
+
+%files
+    env/environment.yaml environment.yaml
 
 %post
-    apt-get update && apt-get install -y git
+    set -e
+    export DEBIAN_FRONTEND=noninteractive
 
-    pip install -U pip
-    pip install numpy pandas seaborn tensorboard
-    pip install torch_geometric==2.5.1
-    pip install pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-2.2.0+cu118.html
-    conda install lightning -c conda-forge
-    pip install lightning[extra]
-    pip install matplotlib==3.8.3
-    pip install biopandas==0.5.1
-    pip install biopython==1.83
-    pip install transformers==4.40.2
-    pip install sentencepiece==0.2.0
-    pip install torchsummary==1.5.1
-    pip install scipy==1.12.0
-    pip install torch_cluster -f https://data.pyg.org/whl/torch-2.2.0+cu118.html
-    pip install git+https://github.com/yusuf1759/prodigy-cryst.git
-    pip install pinder[all]
-    pip install fair-esm
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        bzip2 \
+        ca-certificates \
+        curl \
+        git
+    rm -rf /var/lib/apt/lists/*
+
+    curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest \
+      | tar -xvj -C /usr/local/bin --strip-components=1 bin/micromamba
+
+    export MAMBA_ROOT_PREFIX=/opt/conda
+    mkdir -p "${MAMBA_ROOT_PREFIX}"
+
+    micromamba create -y -n SpatialPPIv2 -f environment.yaml
+    micromamba clean -a -y
+
+%environment
+    export MAMBA_ROOT_PREFIX=/opt/conda
+    export MAMBA_EXE=/usr/local/bin/micromamba
+    export CONDA_DEFAULT_ENV=SpatialPPIv2
+    export PATH=/opt/conda/envs/SpatialPPIv2/bin:/opt/conda/bin:$PATH
+    export CUDA_HOME=/usr/local/cuda
+    export LD_LIBRARY_PATH=/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
+
+%runscript
+    if [ "$#" -eq 0 ]; then
+        exec /bin/bash
+    else
+        exec micromamba run -n SpatialPPIv2 "$@"
+    fi
